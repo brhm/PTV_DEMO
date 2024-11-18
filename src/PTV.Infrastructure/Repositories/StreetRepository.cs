@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
+using Npgsql;
 using PTV.Core.Entities;
 using PTV.Core.Interfaces;
 using PTV.Infrastructure.Data;
@@ -47,12 +48,24 @@ namespace PTV.Infrastructure.Repositories
         }
         public async Task AddPointUsingPostGis(Guid streetId, Coordinate newPoint)
         {
-            var query = @"
-                UPDATE Streets
-                SET Geometry = ST_AddPoint(Geometry, ST_MakePoint(@x, @y))
-                WHERE Id = @streetId;
-            ";
-            await _context.Database.ExecuteSqlRawAsync(query, new { x = newPoint.X, y = newPoint.Y, streetId });
+            var sql = @"
+                UPDATE ""Streets""
+                SET ""Geometry"" = ST_AddPoint(
+                    ""Geometry"",
+                    ST_SetSRID(ST_MakePoint(@x, @y), 4326)
+                )
+                WHERE ""Id"" = @id";
+
+            // Parametreleri açıkça tanımlayın
+            var parameters = new[]
+            {
+                new NpgsqlParameter("@x", newPoint.X),
+                new NpgsqlParameter("@y", newPoint.Y),
+                new NpgsqlParameter("@id", streetId)
+            };
+
+            await _context.Database.ExecuteSqlRawAsync(sql, parameters);
+
         }
     }
 }

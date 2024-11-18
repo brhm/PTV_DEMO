@@ -1,0 +1,101 @@
+# PostgreSQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres-container
+        image: postgis/postgis:15-3.3
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: brhm
+        - name: POSTGRES_PASSWORD
+          value: Test123.
+        - name: POSTGRES_DB
+          value: ptv_demo
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-data
+        emptyDir: {}
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+      nodePort: 30009 #
+  type: NodePort
+
+---
+# PTV WebAPI Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ptv-webapi-deployment
+  labels:
+    app: ptv-webapi
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ptv-webapi
+  template:
+    metadata:
+      labels:
+        app: ptv-webapi
+    spec:
+      containers:
+      - name: ptv-webapi-container
+        image: brhmkskn/ptv_demo:v1
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Production
+        - name: POSTGRES_USER
+          value: brhm
+        - name: POSTGRES_PASSWORD
+          value: Test123.
+        - name: POSTGRES_DB
+          value: ptv_demo
+        - name: POSTGRES_HOST
+          value: postgres-service
+---
+# PTV WebAPI Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ptv-webapi-service
+spec:
+  selector:
+    app: ptv-webapi
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
+
