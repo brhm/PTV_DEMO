@@ -1,0 +1,6 @@
+﻿services:
+  ptv.webapi:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "8080:8080"

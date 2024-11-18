@@ -1,0 +1,33 @@
+﻿version: '3.8'
+
+services:
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: postgres_postgis
+    environment:
+      POSTGRES_USER: brhm
+      POSTGRES_PASSWORD: Test123.
+      POSTGRES_DB: ptv_demo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  ptv.webapi:
+    build:
+      context: .  # Dockerfile bulunduğu dizin
+      dockerfile: Dockerfile
+    image: ptvwebapi:latest
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      POSTGRES_USER: brhm
+      POSTGRES_PASSWORD: Test123.
+      POSTGRES_DB: ptv_demo
+      POSTGRES_HOST: postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
